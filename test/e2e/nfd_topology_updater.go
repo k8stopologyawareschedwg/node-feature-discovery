@@ -46,6 +46,7 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 		crd                 *apiextensionsv1.CustomResourceDefinition
 		topologyUpdaterNode *v1.Node
 		kubeletConfig       *kubeletconfig.KubeletConfiguration
+		extraArgs           []string
 	)
 
 	f := framework.NewDefaultFramework("node-topology-updater")
@@ -79,10 +80,12 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 
 		ginkgo.By("Waiting for the nfd-master service to be up")
 		gomega.Expect(e2enetwork.WaitForService(f.ClientSet, f.Namespace.Name, masterService.Name, true, time.Second, 10*time.Second)).NotTo(gomega.HaveOccurred())
+	})
 
+	ginkgo.JustBeforeEach(func() {
 		ginkgo.By("Creating nfd-topology-updater daemonset")
-		topologyUpdaterDaemonSet := testutils.NFDTopologyUpdaterDaemonSet(fmt.Sprintf("%s:%s", *dockerRepo, *dockerTag), []string{})
-		topologyUpdaterDaemonSet, err = f.ClientSet.AppsV1().DaemonSets(f.Namespace.Name).Create(context.TODO(), topologyUpdaterDaemonSet, metav1.CreateOptions{})
+		topologyUpdaterDaemonSet := testutils.NFDTopologyUpdaterDaemonSet(fmt.Sprintf("%s:%s", *dockerRepo, *dockerTag), extraArgs)
+		topologyUpdaterDaemonSet, err := f.ClientSet.AppsV1().DaemonSets(f.Namespace.Name).Create(context.TODO(), topologyUpdaterDaemonSet, metav1.CreateOptions{})
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		ginkgo.By("Waiting for daemonset pods to be ready")
@@ -100,7 +103,7 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	ginkgo.Context("with single nfd-master pod", func() {
+	AssertSharedContextsTests := func() {
 		ginkgo.It("should fill the node resource topologies CR with the data", func() {
 			gomega.Eventually(func() bool {
 				// TODO: we should avoid to use hardcoded namespace name
@@ -116,6 +119,9 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 				}
 
 				if nodeTopology.TopologyPolicies[0] != (*kubeletConfig).TopologyManagerPolicy {
+					framework.Logf("topology policy is different than expected. current: %v, expected: %v",
+						nodeTopology.TopologyPolicy[0],
+						(*kubeletConfig).TopologyManagerPolicy)
 					return false
 				}
 
@@ -124,6 +130,18 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 				return true
 			}, time.Minute, 5*time.Second).Should(gomega.BeTrue())
 		})
+	}
+
+	ginkgo.Context("with single nfd-master pod and default arguments", func() {
+		AssertSharedContextsTests()
+	})
+
+	ginkgo.Context("with single nfd-master pod and custom arguments", func() {
+		ginkgo.BeforeEach(func() {
+			// Add/Change exsiting arguments for nfd-topology-updater
+			extraArgs = append(extraArgs, "--obtain-kubelet-config=configz-endpoint")
+		})
+		AssertSharedContextsTests()
 	})
 
 	ginkgo.JustAfterEach(func() {

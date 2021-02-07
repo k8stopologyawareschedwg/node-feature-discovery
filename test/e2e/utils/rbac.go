@@ -83,7 +83,10 @@ func createClusterRole(cs clientset.Interface) (*rbacv1.ClusterRole, error) {
 			{
 				APIGroups: []string{""},
 				Resources: []string{"nodes"},
-				Verbs:     []string{"get", "patch", "update"},
+				Verbs: []string{
+					"get",
+					"patch",
+					"update"},
 			},
 			{
 				APIGroups: []string{"topology.node.k8s.io"},
@@ -92,6 +95,13 @@ func createClusterRole(cs clientset.Interface) (*rbacv1.ClusterRole, error) {
 					"create",
 					"get",
 					"update",
+				},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"nodes/proxy"},
+				Verbs: []string{
+					"get",
 				},
 			},
 		},
