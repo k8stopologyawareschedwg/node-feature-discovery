@@ -122,7 +122,7 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 
 				if nodeTopology.TopologyPolicies[0] != (*kubeletConfig).TopologyManagerPolicy {
 					framework.Logf("topology policy is different than expected. current: %v, expected: %v",
-						nodeTopology.TopologyPolicy[0],
+						nodeTopology.TopologyPolicies[0],
 						(*kubeletConfig).TopologyManagerPolicy)
 					return false
 				}
