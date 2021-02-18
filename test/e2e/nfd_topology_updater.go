@@ -36,6 +36,7 @@ import (
 	e2enetwork "k8s.io/kubernetes/test/e2e/framework/network"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 
+	"sigs.k8s.io/node-feature-discovery/pkg/topologypolicy"
 	testutils "sigs.k8s.io/node-feature-discovery/test/e2e/utils"
 )
 
@@ -120,10 +121,11 @@ var _ = framework.KubeDescribe("[NFD] Node topology updater", func() {
 					return false
 				}
 
-				if nodeTopology.TopologyPolicies[0] != (*kubeletConfig).TopologyManagerPolicy {
+				tmPolicy := string(topologypolicy.DetectTopologyPolicy((*kubeletConfig).TopologyManagerPolicy, (*kubeletConfig).TopologyManagerScope))
+				if nodeTopology.TopologyPolicies[0] != tmPolicy {
 					framework.Logf("topology policy is different than expected. current: %v, expected: %v",
 						nodeTopology.TopologyPolicies[0],
-						(*kubeletConfig).TopologyManagerPolicy)
+						tmPolicy)
 					return false
 				}
 

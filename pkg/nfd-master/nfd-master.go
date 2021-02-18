@@ -47,6 +47,7 @@ import (
 	"sigs.k8s.io/node-feature-discovery/pkg/apihelper"
 	"sigs.k8s.io/node-feature-discovery/pkg/dumpobject"
 	pb "sigs.k8s.io/node-feature-discovery/pkg/labeler"
+	"sigs.k8s.io/node-feature-discovery/pkg/topologypolicy"
 	topologypb "sigs.k8s.io/node-feature-discovery/pkg/topologyupdater"
 	"sigs.k8s.io/node-feature-discovery/pkg/version"
 )
@@ -456,7 +457,7 @@ func (s *nodeTopologyServer) UpdateNodeTopology(c context.Context, r *topologypb
 			stderrLogger.Printf("failed to get Kubelet config: %s", err.Error())
 			return &topologypb.NodeTopologyResponse{}, err
 		}
-		r.TopologyPolicies[0] = kc.TopologyManagerPolicy
+		r.TopologyPolicies[0] = string(topologypolicy.DetectTopologyPolicy(kc.TopologyManagerPolicy, kc.TopologyManagerScope))
 	}
 
 	stdoutLogger.Printf("REQUEST Node: %s NFD-version: %s Topology Policy: %s Zones: %v", r.NodeName, r.NfdVersion, r.TopologyPolicies, dumpobject.DumpObject(r.Zones))
