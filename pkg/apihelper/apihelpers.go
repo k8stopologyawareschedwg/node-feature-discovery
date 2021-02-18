@@ -19,6 +19,7 @@ package apihelper
 import (
 	api "k8s.io/api/core/v1"
 	k8sclient "k8s.io/client-go/kubernetes"
+	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 )
 
 // APIHelpers represents a set of API helpers for Kubernetes
@@ -37,4 +38,7 @@ type APIHelpers interface {
 
 	// PatchStatus updates the node status via the API server using a client.
 	PatchStatus(*k8sclient.Clientset, string, interface{}) error
+
+	// GetKubeletConfigs returns node's kubelet config file
+	GetKubeletConfig(c *k8sclient.Clientset, nodeName string) (*kubeletconfig.KubeletConfiguration, error)
 }
