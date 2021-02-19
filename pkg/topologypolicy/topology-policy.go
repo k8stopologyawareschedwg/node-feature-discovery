@@ -4,15 +4,15 @@ package topologypolicy
 // both Topology manager policy and scope
 func DetectTopologyPolicy(policy string, scope string) TopologyManagerPolicy {
 	switch policy {
-	case "single-numa-node":
-		if scope == "pod" {
+	case singleNumaNode:
+		if scope == pod {
 			return SingleNumaPodScope
 		}
 		// default scope for single-numa-node
 		return SingleNumaContainerScope
-	case "Restricted":
+	case restricted:
 		return Restricted
-	case "BestEffort":
+	case bestEffort:
 		return BestEffort
 	default:
 		return None
