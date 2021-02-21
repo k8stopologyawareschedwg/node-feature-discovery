@@ -5,21 +5,21 @@ package topologypolicy
 type TopologyManagerPolicy string
 
 const (
-	SingleNumaContainerScope = "SingleNUMANodeContainerLevel"
-	SingleNumaPodScope       = "SingleNUMANodePodLevel"
-	Restricted               = "Restricted"
-	BestEffort               = "BestEffort"
-	None                     = "None"
+	SingleNumaContainerScope TopologyManagerPolicy = "SingleNUMANodeContainerLevel"
+	SingleNumaPodScope       TopologyManagerPolicy = "SingleNUMANodePodLevel"
+	Restricted               TopologyManagerPolicy = "Restricted"
+	BestEffort               TopologyManagerPolicy = "BestEffort"
+	None                     TopologyManagerPolicy = "None"
 )
 
 // K8sTopologyPolicies are resource allocation policies constants
 type K8sTopologyManagerPolicies string
 
 const (
-	singleNumaNode = "single-numa-node"
-	restricted     = "restricted"
-	bestEffort     = "best-effort"
-	none           = "none"
+	singleNumaNode K8sTopologyManagerPolicies = "single-numa-node"
+	restricted     K8sTopologyManagerPolicies = "restricted"
+	bestEffort     K8sTopologyManagerPolicies = "best-effort"
+	none           K8sTopologyManagerPolicies = "none"
 )
 
 // K8sTopologyScopes are constants which defines the granularity
@@ -27,6 +27,6 @@ const (
 type K8sTopologyManagerScopes string
 
 const (
-	pod       = "pod"
-	container = "container"
+	pod       K8sTopologyManagerScopes = "pod"
+	container K8sTopologyManagerScopes = "container"
 )

@@ -3,9 +3,11 @@ package topologypolicy
 // DetectTopologyPolicy returns TopologyManagerPolicy type which present
 // both Topology manager policy and scope
 func DetectTopologyPolicy(policy string, scope string) TopologyManagerPolicy {
-	switch policy {
+	k8sTmPolicy := K8sTopologyManagerPolicies(policy)
+	k8sTmScope := K8sTopologyManagerScopes(scope)
+	switch k8sTmPolicy {
 	case singleNumaNode:
-		if scope == pod {
+		if k8sTmScope == pod {
 			return SingleNumaPodScope
 		}
 		// default scope for single-numa-node
