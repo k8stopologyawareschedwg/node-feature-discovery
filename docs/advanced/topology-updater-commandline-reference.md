@@ -173,6 +173,18 @@ Example:
 ```bash
 nfd-topology-updater --sysfs=/host
 ```
+### --obtain-kubelet-config
+
+The `--obtain-kubelet-config` specifies the option to obtain Kubelet's configuration file.
+Current available options are via kubelet-config-file or configz-endpoint.
+
+Default: kubelet-config-file
+
+Example:
+
+```bash
+nfd-topology-updater --obtain-kubelet-config=configz-endpoint
+```
 ### --kubelet-config-file
 
 The `--kubelet-config-file` specifies the path to the Kubelet's configuration file.

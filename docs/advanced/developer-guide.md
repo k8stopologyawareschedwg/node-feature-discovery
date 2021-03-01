@@ -301,37 +301,41 @@ nfd-topology-updater.
   nfd-topology-updater [--no-publish][--oneshot | --sleep-interval=<seconds>][--server=<server>]
                        [--server-name-override=<name>] [--ca-file=<path>] [--cert-file=<path>]
                        [--key-file=<path>][--container-runtime=<runtime>] [--podresources-socket=<path>]
-                       [--watch-namespace=<namespace>] [--sysfs=<mountpoint>] [--kubelet-config-file=<path>]
+                       [--watch-namespace=<namespace>] [--sysfs=<mountpoint>] [--obtain-kubelet-config=<option>]
+                       [--kubelet-config-file=<path>]
   nfd-topology-updater -h | --help
   nfd-topology-updater --version
 
   Options:
-  -h --help                       Show this screen.
-  --version                       Output version and exit.
-  --ca-file=<path>                Root certificate for verifying connections
-                                  [Default: ]
-  --cert-file=<path>              Certificate used for authenticating connections
-                                  [Default: ]
-  --key-file=<path>               Private key matching --cert-file
-                                  [Default: ]
-  --server=<server>               NFD server address to connect to.
-                                  [Default: localhost:8080]
-  --server-name-override=<name>   Name (CN) expect from server certificate, useful
-                                  in testing
-                                  [Default: ]
-  --no-publish                    Do not publish discovered features to the
-                                  cluster-local Kubernetes API server.
-  --oneshot                       Update once and exit.
-  --sleep-interval=<seconds>      Time to sleep between re-labeling. Non-positive
-                                  value implies no re-labeling (i.e. infinite
-                                  sleep). [Default: 60s]
-  --watch-namespace=<namespace>   Namespace to watch pods for. Use "" for all namespaces.
-  --sysfs=<mountpoint>            Mount point of the sysfs.
-                                  [Default: /host]
-  --kubelet-config-file=<path>    Kubelet config file path.
-                                  [Default: /podresources/config.yaml]
-  --podresources-socket=<path>    Pod Resource Socket path to use.
-                                  [Default: /podresources/kubelet.sock]
+  -h --help                        Show this screen.
+  --version                        Output version and exit.
+  --ca-file=<path>                 Root certificate for verifying connections
+                                   [Default: ]
+  --cert-file=<path>               Certificate used for authenticating connections
+                                   [Default: ]
+  --key-file=<path>                Private key matching --cert-file
+                                   [Default: ]
+  --server=<server>                NFD server address to connect to.
+                                   [Default: localhost:8080]
+  --server-name-override=<name>    Name (CN) expect from server certificate, useful
+                                   in testing
+                                   [Default: ]
+  --no-publish                     Do not publish discovered features to the
+                                   cluster-local Kubernetes API server.
+  --oneshot                        Update once and exit.
+  --sleep-interval=<seconds>       Time to sleep between re-labeling. Non-positive
+                                   value implies no re-labeling (i.e. infinite
+                                   sleep). [Default: 60s]
+  --watch-namespace=<namespace>    Namespace to watch pods for. Use "" for all namespaces.
+  --sysfs=<mountpoint>             Mount point of the sysfs.
+                                   [Default: /host]
+  --obtain-kubelet-config=<option> Options to obtain Kubelet config file
+                                   [Possible arguments: kubelet-config-file/configz-endpoint]
+                                   [Default: kubelet-config-file]                                
+  --kubelet-config-file=<path>     Kubelet config file path.
+                                   [Default: /podresources/config.yaml]
+  --podresources-socket=<path>     Pod Resource Socket path to use.
+                                   [Default: /podresources/kubelet.sock]
 ```
 
 **NOTE** Some feature sources need certain directories and/or files from the
