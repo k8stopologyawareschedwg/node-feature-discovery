@@ -1,17 +1,5 @@
 package topologypolicy
 
-// TopologyManagerPolicy constants which represent the current configuration
-// for Topology manager policy and Topology manager scope in Kubelet config
-type TopologyManagerPolicy string
-
-const (
-	SingleNumaContainerScope TopologyManagerPolicy = "SingleNUMANodeContainerLevel"
-	SingleNumaPodScope       TopologyManagerPolicy = "SingleNUMANodePodLevel"
-	Restricted               TopologyManagerPolicy = "Restricted"
-	BestEffort               TopologyManagerPolicy = "BestEffort"
-	None                     TopologyManagerPolicy = "None"
-)
-
 // K8sTopologyPolicies are resource allocation policies constants
 type K8sTopologyManagerPolicies string
 
