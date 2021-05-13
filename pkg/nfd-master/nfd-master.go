@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/apis/topology/v1alpha1"
-	topologyclientset "github.com/k8stopologyawareschedwg/noderesourcetopology-api/pkg/generated/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"golang.org/x/net/context"
@@ -44,7 +43,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/node-feature-discovery/pkg/apihelper"
 	"sigs.k8s.io/node-feature-discovery/pkg/dumpobject"
 	pb "sigs.k8s.io/node-feature-discovery/pkg/labeler"
@@ -112,14 +110,13 @@ type NfdMaster interface {
 }
 
 type nfdMaster struct {
-	args           Args
-	nodeName       string
-	annotationNs   string
-	server         *grpc.Server
-	stop           chan struct{}
-	ready          chan bool
-	apihelper      apihelper.APIHelpers
-	topologyClient *topologyclientset.Clientset
+	args         Args
+	nodeName     string
+	annotationNs string
+	server       *grpc.Server
+	stop         chan struct{}
+	ready        chan bool
+	apihelper    apihelper.APIHelpers
 }
 
 // statusOp is a json marshaling helper used for patching node status
@@ -163,15 +160,6 @@ func NewNfdMaster(args *Args) (NfdMaster, error) {
 
 	// Initialize Kubernetes API helpers
 	nfd.apihelper = apihelper.K8sHelpers{Kubeconfig: args.Kubeconfig}
-
-	restConfig, err := rest.InClusterConfig()
-	if err != nil {
-		return nfd, fmt.Errorf("please run from inside the cluster")
-	}
-	nfd.topologyClient, err = topologyclientset.NewForConfig(restConfig)
-	if err != nil {
-		return nfd, fmt.Errorf("error building example clientset: %s", err.Error())
-	}
 
 	return nfd, nil
 }
@@ -224,7 +212,7 @@ func (m *nfdMaster) Run() error {
 	}
 	m.server = grpc.NewServer(serverOpts...)
 	pb.RegisterLabelerServer(m.server, m)
-	topologypb.RegisterNodeTopologyServer(m.server, &nodeTopologyServer{args: m.args, topologyClient: m.topologyClient})
+	topologypb.RegisterNodeTopologyServer(m.server, m)
 	klog.Infof("gRPC server serving on port: %d", m.args.Port)
 
 	// Run gRPC server
@@ -450,14 +438,8 @@ func (m *nfdMaster) SetLabels(c context.Context, r *pb.SetLabelsRequest) (*pb.Se
 	return &pb.SetLabelsReply{}, nil
 }
 
-// Implement NodeTopologyServer
-type nodeTopologyServer struct {
-	args           Args
-	topologyClient *topologyclientset.Clientset
-}
-
-func (s *nodeTopologyServer) UpdateNodeTopology(c context.Context, r *topologypb.NodeTopologyRequest) (*topologypb.NodeTopologyResponse, error) {
-	if s.args.VerifyNodeName {
+func (m *nfdMaster) UpdateNodeTopology(c context.Context, r *topologypb.NodeTopologyRequest) (*topologypb.NodeTopologyResponse, error) {
+	if m.args.VerifyNodeName {
 		// Client authorization.
 		// Check that the node name matches the CN from the TLS cert
 		client, ok := peer.FromContext(c)
@@ -482,8 +464,8 @@ func (s *nodeTopologyServer) UpdateNodeTopology(c context.Context, r *topologypb
 	}
 	stdoutLogger.Printf("REQUEST Node: %s NFD-version: %s Topology Policy: %s Zones: %v", r.NodeName, r.NfdVersion, r.TopologyPolicies, dumpobject.DumpObject(r.Zones))
 
-	if !s.args.NoPublish {
-		err := s.updateCRD(r.NodeName, r.TopologyPolicies, r.Zones, "default")
+	if !m.args.NoPublish {
+		err := m.updateCRD(r.NodeName, r.TopologyPolicies, r.Zones, "default")
 		if err != nil {
 			stderrLogger.Printf("failed to advertise labels: %s", err.Error())
 			return &topologypb.NodeTopologyResponse{}, err
@@ -698,12 +680,17 @@ func modifyCRD(topoUpdaterZones []*topologypb.Zone) []v1alpha1.Zone {
 
 }
 
-func (s *nodeTopologyServer) updateCRD(hostname string, tmpolicy []string, topoUpdaterZones []*topologypb.Zone, namespace string) error {
+func (m *nfdMaster) updateCRD(hostname string, tmpolicy []string, topoUpdaterZones []*topologypb.Zone, namespace string) error {
+	cli, err := m.apihelper.GetTopologyClient()
+	if err != nil {
+		return err
+	}
+
 	var zones v1alpha1.ZoneList
 	log.Printf("Exporter Update called NodeResources is: %+v", dumpobject.DumpObject(topoUpdaterZones))
 	zones = modifyCRD(topoUpdaterZones)
 
-	nrt, err := s.topologyClient.TopologyV1alpha1().NodeResourceTopologies(namespace).Get(context.TODO(), hostname, metav1.GetOptions{})
+	nrt, err := cli.TopologyV1alpha1().NodeResourceTopologies(namespace).Get(context.TODO(), hostname, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		nrtNew := v1alpha1.NodeResourceTopology{
 			ObjectMeta: metav1.ObjectMeta{
@@ -713,7 +700,7 @@ func (s *nodeTopologyServer) updateCRD(hostname string, tmpolicy []string, topoU
 			TopologyPolicies: tmpolicy,
 		}
 
-		nrtCreated, err := s.topologyClient.TopologyV1alpha1().NodeResourceTopologies(namespace).Create(context.TODO(), &nrtNew, metav1.CreateOptions{})
+		nrtCreated, err := cli.TopologyV1alpha1().NodeResourceTopologies(namespace).Create(context.TODO(), &nrtNew, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("Failed to create v1alpha1.NodeResourceTopology!:%v", err)
 		}
@@ -728,7 +715,7 @@ func (s *nodeTopologyServer) updateCRD(hostname string, tmpolicy []string, topoU
 	nrtMutated := nrt.DeepCopy()
 	nrtMutated.Zones = zones
 
-	nrtUpdated, err := s.topologyClient.TopologyV1alpha1().NodeResourceTopologies(namespace).Update(context.TODO(), nrtMutated, metav1.UpdateOptions{})
+	nrtUpdated, err := cli.TopologyV1alpha1().NodeResourceTopologies(namespace).Update(context.TODO(), nrtMutated, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to update v1alpha1.NodeResourceTopology!:%v", err)
 	}
